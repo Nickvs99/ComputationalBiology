@@ -34,20 +34,20 @@ def e(I):
         data_list = np.transpose(data_list)
 
     plt.plot(1/data_list[0][1:], 1/data_list[1][1:], label="Data")
-    i = 0
-    for inverse_inhibitor in (inverse_com, inverse_uncom, inverse_noncom):
-        popt, pcov = curve_fit(lambda S, Vmax, Km, Ki: inverse_inhibitor(S, I, Vmax, Km, Ki), 1/data_list[0][1:], 1/data_list[1][1:], p0=(1,1,1), bounds=((0, 0, 0), (10**8, 10**8, 10**8)))
-        print(f"Vmax = {popt[0]}, Km = {popt[1]}, Ki= {popt[2]}")
-        print(f"perr = {np.sqrt(np.diag(pcov))}")
-        x_values = np.linspace(min(1/data_list[0][1:]), max(1/data_list[0][1:]), 100)
-        plt.plot(x_values, inverse_inhibitor(x_values, I, popt[0], popt[1], popt[2]), ("-", "--", ":")[i%3], label=f"Fit {inverse_inhibitor.__name__}")
-        i += 1
-    print("")
+    # i = 0
+    # for inverse_inhibitor in (inverse_com, inverse_uncom, inverse_noncom):
+    #     popt, pcov = curve_fit(lambda S, Vmax, Km, Ki: inverse_inhibitor(S, I, Vmax, Km, Ki), 1/data_list[0][1:], 1/data_list[1][1:], p0=(1,1,1), bounds=((0, 0, 0), (10**8, 10**8, 10**8)))
+    #     print(f"Vmax = {popt[0]}, Km = {popt[1]}, Ki= {popt[2]}")
+    #     print(f"perr = {np.sqrt(np.diag(pcov))}")
+    #     x_values = np.linspace(min(1/data_list[0][1:]), max(1/data_list[0][1:]), 100)
+    #     plt.plot(x_values, inverse_inhibitor(x_values, I, popt[0], popt[1], popt[2]), ("-", "--", ":")[i%3], label=f"Fit {inverse_inhibitor.__name__}")
+    #     i += 1
+    # print("")
     plt.xlabel("1/[S]")
     plt.ylabel("1/[V]")
     plt.title(f"I = {I}")
     plt.legend()
-    plt.show()
+    # plt.show()
 
     # popt, pcov = curve_fit(lambda S, Vmax, Km, Ki: competitive_inhibitor(S, 2, Vmax, Km, Ki), data_list[0], data_list[1])
     # print(popt, pcov)
@@ -86,3 +86,4 @@ if __name__ == "__main__":
     e(2)
     e(5)
     e(8)
+    plt.show()

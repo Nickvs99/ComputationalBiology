@@ -41,4 +41,5 @@ def LB_plot():
     plt.ylabel("1/[V]")
     plt.show()
 
-# print(make_fit(), LB_params())
+if __name__ == "__main__":
+    print(make_fit(), LB_params())
