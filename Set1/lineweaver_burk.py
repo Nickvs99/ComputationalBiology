@@ -19,7 +19,7 @@ def make_fit():
 
     x_values = np.linspace(min(data_list[0]), max(data_list[0]), 100)
     plt.plot(x_values, michaelis_menten_equation(x_values, popt[0], popt[1]), label="Fit")
-    plt.plot(data_list[0], data_list[1], label="Measured data")
+    plt.scatter(data_list[0], data_list[1], label="Measured data")
     plt.xlabel("[S]")
     plt.ylabel("[V]")
     plt.legend()
@@ -36,10 +36,16 @@ def LB_params():
     return [1 / popt[0], popt[1] / popt[0]]
 
 def LB_plot():
-    plt.plot(1/data_list[0][1:], 1/data_list[1][1:])
+    popt, pcov = curve_fit(linear_fit_func, 1/data_list[0][1:], 1/data_list[1][1:])
+    print(popt)
+    x_values = np.linspace(min(1/data_list[0][1:]), max(1/data_list[0][1:]), 100)
+    plt.plot(x_values, linear_fit_func(x_values, popt[0], popt[1]), 'r-', label="Fit")
+    plt.scatter(1/data_list[0][1:], 1/data_list[1][1:], label="Measured data")
     plt.xlabel("1/[S]")
     plt.ylabel("1/[V]")
+    plt.legend()
     plt.show()
 
 if __name__ == "__main__":
-    print(make_fit(), LB_params())
+    # print(make_fit(), LB_params())
+    LB_plot()

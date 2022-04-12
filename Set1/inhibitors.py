@@ -33,19 +33,16 @@ def e(I):
         
         data_list = np.transpose(data_list)
 
-    plt.plot(1/data_list[0][1:], 1/data_list[1][1:], label="Data")
-    # i = 0
-    # for inverse_inhibitor in (inverse_com, inverse_uncom, inverse_noncom):
-    #     popt, pcov = curve_fit(lambda S, Vmax, Km, Ki: inverse_inhibitor(S, I, Vmax, Km, Ki), 1/data_list[0][1:], 1/data_list[1][1:], p0=(1,1,1), bounds=((0, 0, 0), (10**8, 10**8, 10**8)))
-    #     print(f"Vmax = {popt[0]}, Km = {popt[1]}, Ki= {popt[2]}")
-    #     print(f"perr = {np.sqrt(np.diag(pcov))}")
-    #     x_values = np.linspace(min(1/data_list[0][1:]), max(1/data_list[0][1:]), 100)
-    #     plt.plot(x_values, inverse_inhibitor(x_values, I, popt[0], popt[1], popt[2]), ("-", "--", ":")[i%3], label=f"Fit {inverse_inhibitor.__name__}")
-    #     i += 1
-    # print("")
+    plt.scatter(1/data_list[0][1:], 1/data_list[1][1:], label=f"Measured I = {I}")
+    
+    popt, pcov = curve_fit(linear_fit_func, 1/data_list[0][1:], 1/data_list[1][1:])
+    x_values = np.linspace(0, 1.03, 100)
+    plt.plot(x_values, linear_fit_func(x_values, popt[0], popt[1]), label=f"Fit I = {I}")
+    print(popt)
+    print(pcov)
+
     plt.xlabel("1/[S]")
-    plt.ylabel("1/[V]")
-    plt.title(f"I = {I}")
+    plt.ylabel("1/v")
     plt.legend()
     # plt.show()
 
@@ -59,16 +56,16 @@ def e(I):
     # plt.legend()
     # plt.show()
 
-def d():
-    I_values = np.linspace(1, 20, 5)
-    Ki_values = np.linspace(0.2, 4, 5)
-    S_values = np.linspace(0, 20, 100)
+def d(inhibitor, Smax):
+    I_values = np.linspace(1, 25, 4)
+    Ki_values = np.linspace(0.1, 3.1, 4)
+    S_values = np.linspace(0, Smax, 100)
 
-    inhibitor = competitive_inhibitor
+    # inhibitor = competitive_inhibitor
 
     plt.plot(S_values, michaelis_menten_equation(S_values, 12, 1), label="Michaelis-Menten")
     for I in I_values:
-        plt.plot(S_values, inhibitor(S_values, I, 12, 1, 1), label=f"Competitive, I = {I}")
+        plt.plot(S_values, inhibitor(S_values, I, 12, 1, 1), label=f"I = {I}") #label=f"{inhibitor.__name__.split('_')[0].title()}, I = {I}")
     plt.legend()
     plt.xlabel("[S]")
     plt.ylabel("v")
@@ -76,7 +73,7 @@ def d():
 
     plt.plot(S_values, michaelis_menten_equation(S_values, 12, 1), label="Michaelis-Menten")
     for Ki in Ki_values:
-        plt.plot(S_values, inhibitor(S_values, 1, 12, 1, Ki), label=f"Competitive, Ki = {Ki}")
+        plt.plot(S_values, inhibitor(S_values, 1, 12, 1, Ki), label=f"I = {I}") #label=f"{inhibitor.__name__.split('_')[0].title()}, I = {I}")
     plt.legend()
     plt.xlabel("[S]")
     plt.ylabel("v")
