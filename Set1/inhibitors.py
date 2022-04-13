@@ -33,11 +33,11 @@ def e(I):
         
         data_list = np.transpose(data_list)
 
-    plt.scatter(1/data_list[0][1:], 1/data_list[1][1:], label=f"Measured I = {I}")
+    plt.scatter(1/data_list[0][1:], 1/data_list[1][1:], label=f"Measured [I] = {I}")
     
     popt, pcov = curve_fit(linear_fit_func, 1/data_list[0][1:], 1/data_list[1][1:])
     x_values = np.linspace(0, 1.03, 100)
-    plt.plot(x_values, linear_fit_func(x_values, popt[0], popt[1]), label=f"Fit I = {I}")
+    plt.plot(x_values, linear_fit_func(x_values, popt[0], popt[1]), label=f"Fit [I] = {I}")
     print(popt)
     print(pcov)
 
@@ -65,16 +65,16 @@ def d(inhibitor, Smax):
 
     plt.plot(S_values, michaelis_menten_equation(S_values, 12, 1), label="Michaelis-Menten")
     for I in I_values:
-        plt.plot(S_values, inhibitor(S_values, I, 12, 1, 1), label=f"I = {I}") #label=f"{inhibitor.__name__.split('_')[0].title()}, I = {I}")
-    plt.legend()
+        plt.plot(S_values, inhibitor(S_values, I, 12, 1, 1), label=f"[I] = {I}") #label=f"{inhibitor.__name__.split('_')[0].title()}, I = {I}")
+    plt.legend(loc='lower right')
     plt.xlabel("[S]")
     plt.ylabel("v")
     plt.show()
 
     plt.plot(S_values, michaelis_menten_equation(S_values, 12, 1), label="Michaelis-Menten")
     for Ki in Ki_values:
-        plt.plot(S_values, inhibitor(S_values, 1, 12, 1, Ki), label=f"I = {I}") #label=f"{inhibitor.__name__.split('_')[0].title()}, I = {I}")
-    plt.legend()
+        plt.plot(S_values, inhibitor(S_values, 1, 12, 1, Ki), label=f"Ki = {Ki}") #label=f"{inhibitor.__name__.split('_')[0].title()}, I = {I}")
+    plt.legend(loc='lower right')
     plt.xlabel("[S]")
     plt.ylabel("v")
     plt.show()
