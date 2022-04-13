@@ -24,6 +24,7 @@ def inverse_noncom(inverse_S, I, Vmax, Km, Ki):
     return (1 + I/Ki) / Vmax + ((1 + I / Ki) * Km) / Vmax * inverse_S
 
 def e(I):
+    # assignment 3e - input value of I
     with open(f'Data/DataI{I}.csv', 'r') as f:
         reader = csv.reader(f)
 
@@ -33,8 +34,10 @@ def e(I):
         
         data_list = np.transpose(data_list)
 
+    # plot the measurements
     plt.scatter(1/data_list[0][1:], 1/data_list[1][1:], label=f"Measured [I] = {I}")
     
+    # obtain fitting parameters and plot the fit
     popt, pcov = curve_fit(linear_fit_func, 1/data_list[0][1:], 1/data_list[1][1:])
     x_values = np.linspace(0, 1.03, 100)
     plt.plot(x_values, linear_fit_func(x_values, popt[0], popt[1]), label=f"Fit [I] = {I}")
@@ -44,36 +47,27 @@ def e(I):
     plt.xlabel("1/[S]")
     plt.ylabel("1/v")
     plt.legend()
-    # plt.show()
-
-    # popt, pcov = curve_fit(lambda S, Vmax, Km, Ki: competitive_inhibitor(S, 2, Vmax, Km, Ki), data_list[0], data_list[1])
-    # print(popt, pcov)
-    # x_values = np.linspace(min(data_list[0]), max(data_list[0]), 100)
-    # plt.plot(x_values, competitive_inhibitor(x_values, 2, popt[0], popt[1], popt[2]), label="Fit")
-    # plt.plot(data_list[0], data_list[1], label="Measured data")
-    # plt.xlabel("[S]")
-    # plt.ylabel("[V]")
-    # plt.legend()
-    # plt.show()
 
 def d(inhibitor, Smax):
+    # assignment 3d - input the type of inhibitor to analyze
+
     I_values = np.linspace(1, 25, 4)
     Ki_values = np.linspace(0.1, 3.1, 4)
     S_values = np.linspace(0, Smax, 100)
 
-    # inhibitor = competitive_inhibitor
-
+    # plot MM equation and inhibitor equation for different I
     plt.plot(S_values, michaelis_menten_equation(S_values, 12, 1), label="Michaelis-Menten")
     for I in I_values:
-        plt.plot(S_values, inhibitor(S_values, I, 12, 1, 1), label=f"[I] = {I}") #label=f"{inhibitor.__name__.split('_')[0].title()}, I = {I}")
+        plt.plot(S_values, inhibitor(S_values, I, 12, 1, 1), label=f"[I] = {I}")
     plt.legend(loc='lower right')
     plt.xlabel("[S]")
     plt.ylabel("v")
     plt.show()
 
+    # plot MM equation and inhibitor equation for different Ki
     plt.plot(S_values, michaelis_menten_equation(S_values, 12, 1), label="Michaelis-Menten")
     for Ki in Ki_values:
-        plt.plot(S_values, inhibitor(S_values, 1, 12, 1, Ki), label=f"Ki = {Ki}") #label=f"{inhibitor.__name__.split('_')[0].title()}, I = {I}")
+        plt.plot(S_values, inhibitor(S_values, 1, 12, 1, Ki), label=f"Ki = {Ki}")
     plt.legend(loc='lower right')
     plt.xlabel("[S]")
     plt.ylabel("v")
@@ -83,4 +77,5 @@ if __name__ == "__main__":
     e(2)
     e(5)
     e(8)
+    # show all together in one plot
     plt.show()
