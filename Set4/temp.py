@@ -28,14 +28,20 @@ class Cellular_plots_model:
         # Each row has index 0: type_min, index 1: type_max, index 2: J value
         # J values obtained from Glazer 2013. The report did not specify the
         # J value for M, M 
-        self.J_table = (
-            [0, 0, 0], 
-            [1, 1, 2],
-            [1, 2, 11],
-            [2, 2, 14],
-            [0, 1, 16],
-            [0, 2, 16],
-        )
+        self.J_table = {
+            (0,0): 0, 
+            (1,1): 2,
+            (1,2): 11,
+            (2,2): 14,
+            (0,1): 16,
+            (0,2): 16,
+        }
+
+        for key, value in list(self.J_table.items()):
+            self.J_table[(key[1], key[0])] = value
+
+        self.initialize_rands()
+        # self.Moore = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1))
 
     def initialize_grid_random(self):
         
@@ -89,14 +95,15 @@ class Cellular_plots_model:
     def initialize_cell_sizes(self):
         
         # key: cell_ID, value: cell_size
-        self.cell_sizes = {0: self.nx * self.nx}
+        self.cell_sizes = {}#{0: self.nx * self.nx}
 
-        for cell_ID in range(1, self.n_cells + 1):
+        for cell_ID in np.unique(self.grid[:,:,0]):
 
-            count = np.count_nonzero(self.grid == cell_ID)
+            count = np.count_nonzero(self.grid[:,:,0] == cell_ID)
 
             self.cell_sizes[cell_ID] = count
-            self.cell_sizes[0] -= count
+            
+        # print(self.cell_sizes)
 
     def run(self):
         
@@ -106,16 +113,23 @@ class Cellular_plots_model:
             if self.step % 10000 == 0:
                 print(f"Step: {self.step}", end="\r")
     
-    def update(self):
+    def initialize_rands(self, n=10000):
+        self.randints = list(np.random.uniform(size=n))
 
+    def get_rand(self):
+        if not self.randints:
+            self.initialize_rands()
+        return self.randints.pop()
+
+    def update(self):
         # Pick random lattice site
-        i, j = np.random.randint(1, self.nx, 2)
+        i, j = int((self.nx-1)*self.get_rand()+1), int((self.nx-1)*self.get_rand()+1) # np.random.randint(1, self.nx, 2)
         cell_ID = self.grid[i, j, 0]
         cell_type = self.grid[i, j, 1]
 
         # Pick a random neighbour
         von_neumann_neighbourhood = [(i + 1, j), (i - 1, j), (i, j + 1), (i, j-1)]
-        von_neumann_index = np.random.randint(0, len(von_neumann_neighbourhood))
+        von_neumann_index = int(len(von_neumann_neighbourhood)*self.get_rand()) # np.random.randint(0, len(von_neumann_neighbourhood))
         neighbour_i, neighbour_j = von_neumann_neighbourhood[von_neumann_index]
 
         neighbour_ID = self.grid[neighbour_i, neighbour_j, 0]
@@ -139,7 +153,7 @@ class Cellular_plots_model:
 
         delta_hamiltonian = (new_ham_vol - old_ham_vol) + delta_ham_bond
         
-        if delta_hamiltonian < 0 or np.random.uniform() < np.exp(-delta_hamiltonian/(self.k * self.T)):
+        if delta_hamiltonian < 0 or self.get_rand() < np.exp(-delta_hamiltonian/(self.k * self.T)):
             
             # Update grid
             self.grid[i, j, 0] = neighbour_ID
@@ -174,7 +188,7 @@ class Cellular_plots_model:
         return 2 * (new_ham - old_ham)
 
     def calc_hamiltonian_bond_new_implemetation(self, grid, i, j, cell_ID, cell_type):
-
+        
         H_bond = 0
         for i_offset in [-1, 0, 1]:
             for j_offset in [-1, 0, 1]:
@@ -198,15 +212,18 @@ class Cellular_plots_model:
     def J(self, type1, type2):
 
         # Reduces the number of conditions checked
-        type_min = min(type1, type2)
-        type_max = max(type1, type2)
+        # type_min = 
+        # type_max = 
         
-        for row in self.J_table:
+        # try:
+        return self.J_table[(type1, type2)]
+        # except:
+        #     raise Exception(f"Error: No valid J function found. type1: {type1}, type2:{type2}")  
 
-            if type_min == row[0] and type_max == row[1]:
-                return row[2]
-        
-        raise Exception(f"Error: No valid J function found. type1: {type1}, type2:{type2}")  
+        # for row in self.J_table:
+
+        #     if type_min == row[0] and type_max == row[1]:
+        #         return row[2]
           
     def kronecker_delta(self, value1, value2):
 
