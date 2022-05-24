@@ -29,25 +29,21 @@ class Cellular_plots_model:
         # J values obtained from Glazer 2013. The report did not specify the
         # J value for M, M 
         self.J_table = {
-            (0,0): 0, 
-            (1,1): 2,
-            (1,2): 11,
-            (2,2): 14,
-            (0,1): 16,
-            (0,2): 16,
+            frozenset((0,0)): 0, 
+            frozenset((1,1)): 2,
+            frozenset((1,2)): 11,
+            frozenset((2,2)): 14,
+            frozenset((0,1)): 16,
+            frozenset((0,2)): 16,
         }
 
-        for key, value in list(self.J_table.items()):
-            self.J_table[(key[1], key[0])] = value
-
         self.initialize_rands()
-        # self.Moore = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1))
 
     def initialize_grid_random(self):
         
         # Cells are stored on a 3D grid, where the first two dimensions are spatial
         # and the third dimension stores the cell ID and type
-        self.grid = np.zeros((self.nx + 2, self.nx + 2, 2), dtype=int)
+        self.grid = np.zeros((self.nx + 2, self.nx + 2), dtype=int)
 
 
         for cell_ID in range(1, self.n_cells + 1):
@@ -58,19 +54,18 @@ class Cellular_plots_model:
                 # Pick random lattice site
                 i, j = np.random.randint(1, self.nx, 2)
 
-                if self.grid[i, j, 0] == 0:
+                if self.grid[i, j] == 0:
                     break
                 
             cell_type = np.random.choice(np.arange(1, self.n_types))
 
-            self.grid[i, j, 0] = cell_ID
-            self.grid[i, j, 1] = cell_type
+            self.grid[i, j] = cell_ID
     
     def initialize_grid_fixed(self):
         
         # Cells are stored on a 3D grid, where the first two dimensions are spatial
         # and the third dimension stores the cell ID and type
-        self.grid = np.zeros((self.nx + 2, self.nx + 2, 2), dtype=int)
+        self.grid = np.zeros((self.nx + 2, self.nx + 2), dtype=int)
         
         cells_per_row = int(np.sqrt(self.n_cells))
         cell_width = cell_height = int(np.sqrt(self.equilibrium_area))
@@ -78,9 +73,11 @@ class Cellular_plots_model:
         initial_index_i = int((self.nx - np.sqrt(self.n_cells * self.equilibrium_area)) * 0.5)
         initial_index_j = initial_index_i
 
+        self.types = {0: 0}
+
         for cell_ID in range(1, self.n_cells + 1):
             
-            cell_type = np.random.choice(np.arange(1, self.n_types))
+            self.types[cell_ID] = np.random.choice(np.arange(1, self.n_types))
   
             # Translate cell ID to a column and row value
             cell_row = (cell_ID - 1) % cells_per_row
@@ -89,21 +86,21 @@ class Cellular_plots_model:
             i = initial_index_i + cell_column * cell_width
             j = initial_index_j + cell_row * cell_height
             
-            self.grid[i : i + cell_width, j : j + cell_height, 0] = cell_ID
-            self.grid[i : i + cell_width, j : j + cell_height, 1] = cell_type
+            self.grid[i : i + cell_width, j : j + cell_height] = cell_ID
 
     def initialize_cell_sizes(self):
         
         # key: cell_ID, value: cell_size
-        self.cell_sizes = {}#{0: self.nx * self.nx}
+        self.cell_sizes = {}
 
-        for cell_ID in np.unique(self.grid[:,:,0]):
+        for cell_ID in np.unique(self.grid):
 
-            count = np.count_nonzero(self.grid[:,:,0] == cell_ID)
+            count = np.count_nonzero(self.grid == cell_ID)
 
             self.cell_sizes[cell_ID] = count
-            
-        # print(self.cell_sizes)
+
+    def cell_type(self, cell_ID):
+        return self.types[cell_ID]
 
     def run(self):
         
@@ -113,27 +110,29 @@ class Cellular_plots_model:
             if self.step % 10000 == 0:
                 print(f"Step: {self.step}", end="\r")
     
-    def initialize_rands(self, n=10000):
-        self.randints = list(np.random.uniform(size=n))
+    def initialize_rands(self, n=1000000):
+        self.rand_index = n
+        self.rands = np.random.uniform(size=n)
 
     def get_rand(self):
-        if not self.randints:
+        if self.rand_index < 0:
             self.initialize_rands()
-        return self.randints.pop()
+        self.rand_index -= 1
+        return self.rands[self.rand_index]
 
     def update(self):
         # Pick random lattice site
-        i, j = int((self.nx-1)*self.get_rand()+1), int((self.nx-1)*self.get_rand()+1) # np.random.randint(1, self.nx, 2)
-        cell_ID = self.grid[i, j, 0]
-        cell_type = self.grid[i, j, 1]
+        i, j = int((self.nx-1)*self.get_rand()+1), int((self.nx-1)*self.get_rand()+1) 
+        cell_ID = self.grid[i, j]
+        cell_type = self.cell_type(cell_ID) 
 
         # Pick a random neighbour
         von_neumann_neighbourhood = [(i + 1, j), (i - 1, j), (i, j + 1), (i, j-1)]
-        von_neumann_index = int(len(von_neumann_neighbourhood)*self.get_rand()) # np.random.randint(0, len(von_neumann_neighbourhood))
+        von_neumann_index = int(len(von_neumann_neighbourhood)*self.get_rand()) 
         neighbour_i, neighbour_j = von_neumann_neighbourhood[von_neumann_index]
 
-        neighbour_ID = self.grid[neighbour_i, neighbour_j, 0]
-        neighbour_type = self.grid[neighbour_i, neighbour_j, 1]
+        neighbour_ID = self.grid[neighbour_i, neighbour_j]
+        neighbour_type = self.cell_type(neighbour_ID) 
 
         if cell_ID == neighbour_ID:
             self.step += 1
@@ -156,8 +155,7 @@ class Cellular_plots_model:
         if delta_hamiltonian < 0 or self.get_rand() < np.exp(-delta_hamiltonian/(self.k * self.T)):
             
             # Update grid
-            self.grid[i, j, 0] = neighbour_ID
-            self.grid[i, j, 1] = neighbour_type
+            self.grid[i, j] = neighbour_ID
 
         else:
             # Reset cell size changes
@@ -199,8 +197,8 @@ class Cellular_plots_model:
                 i_prime = i + i_offset
                 j_prime = j + j_offset
                 
-                cell_prime_ID = grid[i_prime, j_prime, 0]
-                cell_prime_type = grid[i_prime, j_prime, 1]
+                cell_prime_ID = grid[i_prime, j_prime]
+                cell_prime_type = self.cell_type(cell_prime_ID)
                 
                 J = self.J(cell_type, cell_prime_type)
                 kronecker_delta = self.kronecker_delta(cell_ID, cell_prime_ID)
@@ -208,22 +206,36 @@ class Cellular_plots_model:
                 H_bond += J * (1 - kronecker_delta)
 
         return H_bond
+    
+    def calc_boundary_lengths(self):
+        lengths = dict.fromkeys(self.J_table.keys(), 0)
+        
+        H_bond = 0
+        for i in range(1, self.grid.shape[0] - 1):
+            for j in range(1, self.grid.shape[1] - 1):
+                cell_ID = self.grid[i, j]
+                cell_type = self.cell_type(cell_ID)
+
+                for i_offset in [-1, 0, 1]:
+                    for j_offset in [-1, 0, 1]:
+
+                        if i_offset == 0 and j_offset == 0:
+                            continue
+
+                        i_prime = i + i_offset
+                        j_prime = j + j_offset
+
+                        cell_prime_ID = self.grid[i_prime, j_prime]
+                        cell_prime_type = self.cell_type(cell_prime_ID)
+
+                        if cell_type != cell_prime_type:
+                            lengths[frozenset((cell_type, cell_prime_type))] += 0.5
+
+        return lengths
         
     def J(self, type1, type2):
 
-        # Reduces the number of conditions checked
-        # type_min = 
-        # type_max = 
-        
-        # try:
-        return self.J_table[(type1, type2)]
-        # except:
-        #     raise Exception(f"Error: No valid J function found. type1: {type1}, type2:{type2}")  
-
-        # for row in self.J_table:
-
-        #     if type_min == row[0] and type_max == row[1]:
-        #         return row[2]
+        return self.J_table[frozenset((type1, type2))]
           
     def kronecker_delta(self, value1, value2):
 
@@ -245,22 +257,41 @@ class Cellular_plots_model:
         if clear_plot:
             clear_output(wait=True)
         
-        grid = np.array(self.grid, dtype=float)
+        grid2 = np.stack([np.array(self.grid, dtype=float), np.vectorize(self.cell_type)(self.grid)], axis=-1)
 
         # For plotting purposes set M cells to None
-        grid[grid==0] = np.nan
+        grid2[grid2==0] = np.nan
         
         fig, (ax1, ax2) = plt.subplots(1, 2)
         
         fig.suptitle(f"Step: {self.step}")
 
-        ax1.matshow(grid[1:-1, 1:-1, 0], cmap='hsv')
+        ax1.matshow(grid2[1:-1, 1:-1, 0], cmap='hsv')
         ax1.set_title("Cell IDs")
 
-        ax2.matshow(grid[1:-1, 1:-1, 1], cmap="magma")
+        ax2.matshow(grid2[1:-1, 1:-1, 1], cmap="magma")
         ax2.set_title("Cell types")
         
         plt.tight_layout()
+        plt.show()
+        
+    def plot_total_boundary_length(self, x):
+        b_values = []
+        f_values = []
+        
+        while self.step < self.n_steps:
+            self.update()
+
+            if self.step % x == 0:
+                print(self.step, end='\r')
+                boundaries = self.calc_boundary_lengths()
+                b_values.append(sum(boundaries.values()))
+                f_values.append(boundaries.values())
+                
+        plt.plot(b_values)
+        plt.show()
+
+        plt.plot(f_values)
         plt.show()
 
 model = Cellular_plots_model(n_steps=1000000, n_types=3, n_cells=100, nx=100, equilibrium_area=40, T=20, lamda=1, k=1)
